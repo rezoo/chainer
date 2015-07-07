@@ -384,7 +384,7 @@ def _get_height(blob):
         return blob.shape.dim[2]
     else:
         raise RuntimeError(
-            '{}-dimentional array is not supported'.format(
+            '{}-dimensional array is not supported'.format(
                 len(blob.shape.dim)))
 
 
@@ -397,5 +397,5 @@ def _get_width(blob):
         return blob.shape.dim[3]
     else:
         raise RuntimeError(
-            '{}-dimentional array is not supported'.format(
+            '{}-dimensional array is not supported'.format(
                 len(blob.shape.dim)))
