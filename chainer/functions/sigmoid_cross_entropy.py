@@ -3,6 +3,7 @@ import numpy
 from chainer import cuda
 from chainer import function
 from chainer.functions import sigmoid
+from chainer.utils import type_check
 
 
 class SigmoidCrossEntropy(function.Function):
@@ -11,6 +12,25 @@ class SigmoidCrossEntropy(function.Function):
 
     def __init__(self, use_cudnn=True):
         self.use_cudnn = use_cudnn
+
+    def check_type_forward(self, in_types):
+        type_check.expect(in_types.size() == 2)
+        x_type, t_type = in_types
+
+        type_check.expect(
+            x_type.dtype == numpy.float32,
+            t_type.dtype == numpy.int32,
+            x_type.ndim == t_type.ndim,
+            x_type.shape == t_type.shape,
+        )
+
+    def check_type_backward(self, in_types, out_types):
+        type_check.expect(
+            in_types.size() == 2,
+            out_types.size() == 1,
+        )
+        y_type, = out_types
+        type_check.expect(y_type.ndim == 0)  # means scalar
 
     def forward_cpu(self, inputs):
         x, t = inputs
