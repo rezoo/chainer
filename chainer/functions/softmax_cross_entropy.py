@@ -135,7 +135,7 @@ def softmax_cross_entropy(x, t, use_cudnn=True, normalize=True):
         t (Variable): Variable holding an int32 vector of groundtruth labels.
         normalize (Variable): Variable holding a boolean value which
             determines the normalization constant. If true, this function
-            normalizes the cross entropy loss across all instances. If else,
+            normalizes the cross entropy loss across all instances. If false,
             it only normalizes along a batch size.
 
     Returns:

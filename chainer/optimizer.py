@@ -71,7 +71,7 @@ class Optimizer(object):
 
                 Note that, on every call of :meth:`update_one`, the state value
                 is passed by value and then the method updates its content, so
-                the state must be a reference. Especiallly, one cannot use a
+                the state must be a reference. Especially, one cannot use a
                 value of built-in numeric type. If the state is one scalar
                 value, it is recommended to use scalar array, i.e.
                 :class:`~numpy.ndarray` with shape ``()``.

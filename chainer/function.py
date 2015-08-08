@@ -38,7 +38,7 @@ class Function(object):
        for multiple function applications, where the different calls must use
        different references to the function object. Note that the copy is
        shallow, so implementations of :class:`Function` must take care of any
-       member attributes shared accross forward and backward computations.
+       member attributes shared across forward and backward computations.
 
     .. admonition:: Example
 
@@ -76,7 +76,7 @@ class Function(object):
 
     Function implementations are classified into two types: parameterized ones
     and non-parameterized ones. A parameterized function holds parameter arrays
-    and coresponding gradient arrays. Implementation can choose any way to keep
+    and corresponding gradient arrays. Implementation can choose any way to keep
     these arrays, but it is recommended to keep them as attributes to easily
     migrate between CPU and GPU. Parameterized function must provide accessors
     to these arrays called :meth:`parameters` and :meth:`gradients`.
@@ -107,7 +107,7 @@ class Function(object):
 
         Basic behavior is also expressed in documentation of :class:`Function`
         class. This function first copies itself to avoid conflict over
-        multiple invokations.
+        multiple invocations.
 
         .. note::
 

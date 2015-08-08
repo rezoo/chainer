@@ -97,7 +97,7 @@ class Variable(object):
     @grad.setter
     def grad(self, g):
         error_msg = '''
-This error is occured in two cases. The first case is when the user manually
+This error is occurred in two cases. The first case is when the user manually
 sets the Variable.grad incorrectly. The second case is when some Function
 implementation has a bug. If you do not manually set the Variable.grad in your
 script, please report this error to the issue tracker with the stack trace,
