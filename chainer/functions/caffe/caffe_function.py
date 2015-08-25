@@ -155,7 +155,6 @@ class CaffeFunction(function.Function):
                 corresponding to elements of the  `outputs` argument.
 
         """
-        self.train = train
         variables = dict(inputs)
         for func_name, bottom, top in self.layers:
             if (func_name in disable or
@@ -165,7 +164,14 @@ class CaffeFunction(function.Function):
 
             func = self.forwards[func_name]
             input_vars = tuple(variables[blob] for blob in bottom)
-            output_vars = func(*input_vars)
+
+            # As currently train flag is used for the Dropout layer only,
+            # we temporally describe this behaviour to the following.
+            if not train and isinstance(func, functions.Dropout):
+                output_vars = input_vars
+            else:
+                output_vars = func(*input_vars)
+
             if not isinstance(output_vars, collections.Iterable):
                 output_vars = output_vars,
             for var, name in zip(output_vars, top):
@@ -260,7 +266,7 @@ class CaffeFunction(function.Function):
         param = layer.dropout_param
 
         self.forwards[layer.name] = functions.Dropout(
-            ratio=param.dropout_ratio, train=self.train)
+            dropout_ratio=param.dropout_ratio)
         self._add_layer(layer)
 
     @_layer('InnerProduct', 'INNER_PRODUCT')
