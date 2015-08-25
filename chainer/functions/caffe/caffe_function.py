@@ -171,7 +171,6 @@ class CaffeFunction(function.Function):
             for var, name in zip(output_vars, top):
                 variables[name] = var
 
-        self.variables = variables
         return tuple(variables[blob] for blob in outputs)
 
     def to_gpu(self, device=None):
@@ -202,7 +201,9 @@ class CaffeFunction(function.Function):
         bottom = []
         for blob_name in layer.bottom:
             bottom.append(self.split_map.get(blob_name, blob_name))
-        self.layers.append((layer.name, bottom, layer.top))
+        # convert an internal container of protobuf to the list
+        top = list(layer.top)
+        self.layers.append((layer.name, bottom, top))
 
     @_layer('Concat', 'CONCAT')
     def _setup_concat(self, layer):
@@ -211,7 +212,7 @@ class CaffeFunction(function.Function):
         if axis == 1 and param.concat_dim != 1:
             axis = param.concat_dim
 
-        self.forwards[layer.name] = lambda *xs: functions.concat(xs, axis=axis)
+        self.forwards[layer.name] = functions.Concat(axis=axis)
         self._add_layer(layer)
 
     @_layer('Convolution', 'CONVOLUTION')
@@ -257,8 +258,8 @@ class CaffeFunction(function.Function):
     def _setup_dropout(self, layer):
         param = layer.dropout_param
 
-        self.forwards[layer.name] = lambda x: functions.dropout(
-            x, ratio=param.dropout_ratio, train=self.train)
+        self.forwards[layer.name] = functions.Dropout(
+            ratio=param.dropout_ratio, train=self.train)
         self._add_layer(layer)
 
     @_layer('InnerProduct', 'INNER_PRODUCT')
@@ -286,8 +287,8 @@ class CaffeFunction(function.Function):
         if param.norm_region != param.ACROSS_CHANNELS:
             raise RuntimeError('Within-channel LRN is not supported')
 
-        fwd = lambda x: functions.local_response_normalization(
-            x, n=param.local_size, k=param.k,
+        fwd = functions.LocalResponseNormalization(
+            n=param.local_size, k=param.k,
             alpha=param.alpha / param.local_size, beta=param.beta)
         self.forwards[layer.name] = fwd
         self._add_layer(layer)
@@ -300,11 +301,11 @@ class CaffeFunction(function.Function):
         pad = _get_pad(param)
 
         if param.pool == param.MAX:
-            fw = lambda x: functions.max_pooling_2d(
-                x, ksize, stride=stride, pad=pad)
+            fw = functions.MaxPooling2D(
+                ksize=ksize, stride=stride, pad=pad)
         elif param.pool == param.AVE:
-            fw = lambda x: functions.average_pooling_2d(
-                x, ksize, stride=stride, pad=pad)
+            fw = functions.AveragePooling2D(
+                ksize=ksize, stride=stride, pad=pad)
         else:
             raise RuntimeError('Stochastic pooling is not supported')
 
@@ -316,9 +317,9 @@ class CaffeFunction(function.Function):
         slope = layer.relu_param.negative_slope
 
         if slope != 0:
-            fw = lambda x: functions.leaky_relu(x, slope=slope)
+            fw = functions.LeakyReLU(slope=slope)
         else:
-            fw = functions.relu
+            fw = functions.ReLU()
 
         self.forwards[layer.name] = fw
         self._add_layer(layer)
@@ -329,7 +330,7 @@ class CaffeFunction(function.Function):
             raise RuntimeError(
                 'Softmax along non-channel axis is not supported')
 
-        self.forwards[layer.name] = functions.softmax_cross_entropy
+        self.forwards[layer.name] = functions.SoftmaxCrossEntropy()
         self._add_layer(layer)
 
     @_layer('Split', 'SPLIT')
