@@ -171,6 +171,7 @@ class CaffeFunction(function.Function):
             for var, name in zip(output_vars, top):
                 variables[name] = var
 
+        self.variables = variables
         return tuple(variables[blob] for blob in outputs)
 
     def to_gpu(self, device=None):
@@ -337,6 +338,13 @@ class CaffeFunction(function.Function):
     def _setup_split(self, layer):
         for top in layer.top:
             self.split_map[top] = layer.bottom[0]
+
+    def __getstate__(self):
+        d = self.__dict__.copy()
+        if 'variables' in d:
+            # remove intermediate variables for serialization
+            d.pop('variables')
+        return d
 
 
 # Internal functions
