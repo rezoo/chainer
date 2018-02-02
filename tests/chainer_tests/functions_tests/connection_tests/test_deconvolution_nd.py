@@ -56,7 +56,8 @@ class TestDeconvolutionND(unittest.TestCase):
         W_shape = (in_channels, out_channels) + ksize
         self.W = numpy.random.normal(0, W_scale, W_shape).astype(self.W_dtype)
         self.b = numpy.random.uniform(-1, 1, out_channels).astype(self.x_dtype)
-        self.check_double_backward_options = {'dtype': numpy.float64}
+        self.check_double_backward_options = {
+            'dtype': numpy.float64, 'atol': 5e-3, 'rtol': 5e-2}
 
         outs = tuple(
             conv.get_deconv_outsize(d, k, s, p)
@@ -76,14 +77,11 @@ class TestDeconvolutionND(unittest.TestCase):
 
         self.test_forward_options = {}
         self.check_backward_options = {
-            'eps': 1e-2, 'atol': 1e-4, 'rtol': 1e-3}
-        if self.x_dtype == numpy.float16:
-            self.test_forward_options = {'atol': 5e-3, 'rtol': 5e-2}
+            'dtype': numpy.float64, 'atol': 3e-5, 'rtol': 3e-4}
+        if self.x_dtype == numpy.float16 or self.W_dtype == numpy.float16:
+            self.test_forward_options = {'atol': 5e-4, 'rtol': 5e-3}
             self.check_backward_options = {
-                'eps': 2 ** -3, 'atol': 1e-2, 'rtol': 1e-1}
-        elif self.W_dtype == numpy.float16:
-            self.check_backward_options = {
-                'eps': 2 ** -3, 'atol': 1e-3, 'rtol': 1e-2}
+                'dtype': numpy.float64, 'atol': 2 ** -4, 'rtol': 2 ** -4}
 
     def check_forward_consistency(self, use_cudnn='always'):
         x_cpu = chainer.Variable(self.x)
@@ -169,7 +167,7 @@ class TestDeconvolutionND(unittest.TestCase):
 
         args = (x_data, W_data)
         if b_data is not None:
-            args = args + (b_data,)
+            args += (b_data,)
 
         def f(*args):
             return F.deconvolution_nd(*args, stride=self.stride, pad=self.pad,
@@ -232,8 +230,8 @@ class TestDeconvolutionND(unittest.TestCase):
         args = (x_data, W_data)
         grad_grads = (x_grad_grad, W_grad_grad)
         if b_data is not None:
-            args = args + (b_data,)
-            grad_grads = grad_grads + (b_grad_grad,)
+            args += (b_data,)
+            grad_grads += (b_grad_grad,)
 
         def f(*args):
             y = F.deconvolution_nd(
@@ -246,7 +244,7 @@ class TestDeconvolutionND(unittest.TestCase):
                     f, args, y_grad, grad_grads,
                     **self.check_double_backward_options)
 
-    @condition.retry(10)
+    @condition.retry(3)
     def test_double_backward_cpu(self):
         inputs = [self.x, self.W, self.b]
         grad_outputs = [self.gy]
@@ -255,7 +253,7 @@ class TestDeconvolutionND(unittest.TestCase):
             inputs, grad_outputs, grad_grad_inputs)
 
     @attr.cudnn
-    @condition.retry(10)
+    @condition.retry(3)
     def test_double_backward_cudnn(self):
         b = None if self.b is None else cuda.to_gpu(self.b)
         inputs = [cuda.to_gpu(self.x), cuda.to_gpu(self.W), b]
