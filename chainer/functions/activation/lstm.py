@@ -181,6 +181,15 @@ class LSTMGrad(function.Function):
 
         c_prev, x, c, gc, gh = inputs
         ggc_prev, ggx = grads
+        batch = len(x)
+
+        # Consider the case that either gradient is not given
+        if gc is None:
+            gc = xp.zeros_like(c)
+        if gh is None:
+            gh = xp.zeros_like(c[:batch])
+        if ggc_prev is None:
+            ggc_prev = xp.zeros_like(c_prev)
 
         gc_prev = xp.empty_like(c_prev)
         gx = xp.empty_like(x)
